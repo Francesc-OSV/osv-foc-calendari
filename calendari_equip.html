@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendari d'equip — OSV-FOC</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f3f2f1;color:#323130;font-size:14px}
+.app-header{background:#0078d4;color:#fff;padding:0 16px;height:48px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.app-header i{font-size:20px}
+.app-header h1{font-size:16px;font-weight:600}
+.app-header .spacer{flex:1}
+.user-badge{display:flex;align-items:center;gap:8px;font-size:13px}
+.avatar{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:1.5px solid rgba(255,255,255,.4)}
+.subbar{background:#fff;border-bottom:1px solid #edebe9;padding:6px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:2px;border:1px solid transparent;cursor:pointer;font-size:13px;font-family:inherit;transition:background .1s}
+.btn-primary{background:#0078d4;color:#fff;border-color:#0078d4}
+.btn-primary:hover{background:#106ebe}
+.btn-default{background:#fff;color:#323130;border-color:#8a8886}
+.btn-default:hover{background:#f3f2f1}
+.btn-icon{padding:5px 8px}
+.nav-wrap{display:flex;align-items:center;gap:4px}
+.month-title{font-size:14px;font-weight:600;min-width:160px;text-align:center;color:#323130}
+.sep{width:1px;height:24px;background:#edebe9;margin:0 4px}
+.view-tabs{display:flex;gap:2px}
+.view-tab{padding:5px 10px;border-radius:2px;cursor:pointer;font-size:12px;color:#605e5c;border:1px solid transparent;user-select:none}
+.view-tab:hover{background:#f3f2f1}
+.view-tab.active{background:#deecf9;color:#0078d4;border-color:#c7e0f4}
+.filter-wrap{display:flex;align-items:center;gap:6px;font-size:12px;color:#605e5c}
+.filter-wrap select,.filter-wrap input{padding:4px 8px;border:1px solid #8a8886;border-radius:2px;font-size:12px;background:#fff;color:#323130;font-family:inherit;height:28px}
+.layout{display:flex}
+.sidebar{width:260px;min-width:260px;background:#fff;border-right:1px solid #edebe9;display:flex;flex-direction:column;max-height:calc(100vh - 100px)}
+.sidebar-head{padding:10px 12px;border-bottom:1px solid #edebe9;font-size:13px;font-weight:600;color:#323130;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sidebar-body{overflow-y:auto;flex:1;padding:8px}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.cal-wrap{padding:10px 14px;flex:1;overflow:auto}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:2px}
+.cal-head-cell{text-align:center;font-size:11px;font-weight:600;color:#605e5c;padding:5px 0;text-transform:uppercase;letter-spacing:.4px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#edebe9;border:1px solid #edebe9;border-radius:2px;overflow:hidden}
+.day{background:#fff;min-height:86px;padding:4px;cursor:pointer;transition:background .1s;position:relative}
+.day:hover{background:#f3f2f1}
+.day:hover::after{content:"Doble clic per afegir";position:absolute;bottom:3px;right:4px;font-size:9px;color:#a19f9d;pointer-events:none}
+.day.other{background:#faf9f8;opacity:.55}
+.day.other:hover::after{display:none}
+.day.weekend{background:#faf9f8}
+.day.today .day-num{background:#0078d4;color:#fff;border-radius:50%}
+.day.selected{outline:2px solid #0078d4;outline-offset:-2px}
+.day-num{font-size:12px;font-weight:600;color:#323130;width:22px;height:22px;display:flex;align-items:center;justify-content:center;margin-bottom:2px}
+.day.other .day-num{color:#a19f9d}
+.pill{border-radius:2px;padding:2px 5px;font-size:10.5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;cursor:pointer}
+.pill:hover{filter:brightness(.94)}
+.pill-tt{background:#deecf9;color:#004578}
+.pill-ld{background:#dff6dd;color:#107c10}
+.pill-vac{background:#fdcfb4;color:#8a3100}
+.pill-vt{background:#fef9e7;color:#7d5c00}
+.more-pill{font-size:10px;color:#605e5c;padding:1px 3px}
+.week-grid{display:grid;grid-template-columns:52px repeat(7,1fr);border:1px solid #edebe9;border-radius:2px;overflow:hidden;background:#edebe9;gap:1px;margin:10px 14px}
+.wk-head{background:#fff;padding:5px 4px;text-align:center;font-size:11px;font-weight:600;color:#605e5c;text-transform:uppercase}
+.wk-head.today-col{color:#0078d4}
+.wk-day-num{font-size:18px;font-weight:300;color:#323130;line-height:1}
+.wk-day-num.today-num{background:#0078d4;color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:15px;font-weight:600}
+.wk-time-col{background:#fff;font-size:11px;color:#a19f9d;text-align:right;padding:4px 6px 0;border-top:1px solid #f3f2f1}
+.wk-cell{background:#fff;min-height:44px;padding:2px;position:relative;cursor:pointer;border-top:1px solid #f3f2f1}
+.wk-cell:hover{background:#f3f2f1}
+.wk-cell.weekend-cell{background:#faf9f8}
+.wk-pill{border-radius:2px;padding:3px 6px;font-size:11px;margin-bottom:2px;cursor:pointer;line-height:1.4}
+.wk-pill:hover{filter:brightness(.94)}
+.list-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #edebe9;border-radius:2px;overflow:hidden}
+.list-table th{background:#f3f2f1;padding:8px 12px;text-align:left;font-size:12px;font-weight:600;color:#605e5c;border-bottom:1px solid #edebe9;white-space:nowrap;cursor:pointer;user-select:none}
+.list-table th:hover{background:#edebe9}
+.list-table th .sort-icon{margin-left:4px;opacity:.5;font-size:11px}
+.list-table td{padding:7px 12px;font-size:13px;border-bottom:1px solid #f3f2f1;vertical-align:middle}
+.list-table tr:last-child td{border-bottom:none}
+.list-table tr:hover td{background:#f3f2f1}
+.list-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:2px;font-size:11px;font-weight:600;white-space:nowrap}
+.list-empty{padding:32px;text-align:center;color:#a19f9d;font-size:13px}
+.list-empty i{font-size:32px;display:block;margin-bottom:8px;color:#c8c6c4}
+.list-toolbar{padding:8px 14px;background:#fff;border-bottom:1px solid #edebe9;display:flex;gap:8px;align-items:center}
+.list-search{padding:5px 10px;border:1px solid #8a8886;border-radius:2px;font-size:12px;font-family:inherit;width:200px}
+.list-count{font-size:12px;color:#605e5c;margin-left:auto}
+.legend{background:#fff;border-top:1px solid #edebe9;padding:8px 16px;display:flex;gap:14px;flex-wrap:wrap;flex-shrink:0}
+.leg{display:flex;align-items:center;gap:5px;font-size:12px;color:#605e5c}
+.leg-box{width:12px;height:12px;border-radius:2px}
+.entry-card{border-radius:2px;padding:8px 10px;margin-bottom:6px;border-left:3px solid transparent}
+.entry-card:hover{filter:brightness(.97)}
+.ec-tt{background:#deecf9;border-color:#0078d4}
+.ec-ld{background:#dff6dd;border-color:#107c10}
+.ec-vac{background:#fdcfb4;border-color:#d83b01}
+.ec-vt{background:#fef9e7;border-color:#c8a000}
+.ec-user{font-weight:600;font-size:12px}
+.ec-dates{font-size:11px;color:#605e5c;margin-top:2px}
+.ec-note{font-size:11px;color:#605e5c;margin-top:2px;font-style:italic}
+.btn-sm{font-size:11px;padding:2px 8px;border-radius:2px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-family:inherit}
+.empty-day{padding:20px 8px;text-align:center;color:#a19f9d;font-size:12px}
+.empty-day i{font-size:26px;display:block;margin-bottom:5px;color:#c8c6c4}
+.btn-add-small{font-size:11px;padding:3px 8px;border:1px solid #8a8886;border-radius:2px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:4px}
+.btn-add-small:hover{background:#f3f2f1}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;width:440px;border-radius:2px;box-shadow:0 8px 32px rgba(0,0,0,.24);overflow:hidden}
+.modal-head{background:#0078d4;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.modal-head span{font-size:15px;font-weight:600}
+.modal-head button{background:none;border:none;color:#fff;cursor:pointer;padding:2px;border-radius:2px;font-size:18px;display:flex}
+.modal-head button:hover{background:rgba(255,255,255,.2)}
+.modal-body{padding:18px 20px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:#323130;margin-bottom:4px}
+.form-group select,.form-group input,.form-group textarea{width:100%;padding:6px 8px;border:1px solid #8a8886;border-radius:2px;font-size:13px;font-family:inherit;color:#323130;background:#fff}
+.form-group select:focus,.form-group input:focus,.form-group textarea:focus{outline:2px solid #0078d4;outline-offset:-1px;border-color:#0078d4}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+.form-group textarea{resize:vertical;min-height:54px}
+.modal-foot{padding:12px 16px;border-top:1px solid #edebe9;display:flex;justify-content:flex-end;gap:8px}
+.hint{font-size:11px;color:#605e5c;margin-top:3px}
+.ac-wrap{position:relative}
+.ac-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #8a8886;border-top:none;border-radius:0 0 2px 2px;z-index:20;max-height:140px;overflow-y:auto;display:none}
+.ac-drop.show{display:block}
+.ac-item{padding:6px 10px;font-size:13px;cursor:pointer;color:#323130}
+.ac-item:hover{background:#deecf9}
+.ac-item.new-user{color:#0078d4;font-style:italic}
+.toast{position:fixed;bottom:20px;right:20px;background:#323130;color:#fff;padding:10px 16px;border-radius:2px;font-size:13px;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:200;display:flex;align-items:center;gap:8px}
+.toast.show{opacity:1;transform:translateY(0)}
+.loading{text-align:center;padding:40px;color:#605e5c;font-size:13px}
+.loading i{font-size:28px;display:block;margin-bottom:8px;color:#0078d4;animation:spin 1s linear infinite}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@media(max-width:720px){.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <i class="ti ti-calendar-event" aria-hidden="true"></i>
+  <h1>Calendari d'equip — OSV-FOC</h1>
+  <div class="spacer"></div>
+  <div class="user-badge">
+    <div class="avatar" id="headerAvatar">?</div>
+    <span id="headerUser">—</span>
+  </div>
+</div>
+
+<div class="subbar">
+  <button class="btn btn-primary" id="btnNova"><i class="ti ti-plus"></i> Nova entrada</button>
+  <div class="sep"></div>
+  <div class="nav-wrap">
+    <button class="btn btn-default btn-icon" id="btnPrev"><i class="ti ti-chevron-left"></i></button>
+    <span class="month-title" id="navTitle"></span>
+    <button class="btn btn-default btn-icon" id="btnNext"><i class="ti ti-chevron-right"></i></button>
+    <button class="btn btn-default" id="btnAvui">Avui</button>
+  </div>
+  <div class="sep"></div>
+  <div class="view-tabs">
+    <div class="view-tab" id="tabMes" data-view="mes">Mes</div>
+    <div class="view-tab" id="tabSetmana" data-view="setmana">Setmana</div>
+    <div class="view-tab" id="tabLlista" data-view="llista">Llista</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="filter-wrap">
+    <i class="ti ti-search" aria-hidden="true" style="font-size:14px"></i>
+    <input type="text" id="filterUserText" placeholder="Filtrar usuari..." style="width:130px">
+    <i class="ti ti-tag" aria-hidden="true" style="font-size:14px"></i>
+    <select id="filterTipus">
+      <option value="">Tots els tipus</option>
+      <option value="Teletreball">Teletreball</option>
+      <option value="Lliure disposició">Lliure disposició</option>
+      <option value="Vacances">Vacances</option>
+      <option value="Viatge de treball">Viatge de treball</option>
+    </select>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-head">
+      <span id="sidebarDateLabel">Selecciona un dia</span>
+      <button class="btn-add-small" id="btnAddSidebar"><i class="ti ti-plus"></i> Afegir</button>
+    </div>
+    <div class="sidebar-body" id="sidebarContent">
+      <div class="empty-day"><i class="ti ti-calendar"></i>Clica un dia per veure les entrades</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="viewMes" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="cal-wrap">
+        <div class="cal-head">
+          <div class="cal-head-cell">Dl</div><div class="cal-head-cell">Dt</div>
+          <div class="cal-head-cell">Dc</div><div class="cal-head-cell">Dj</div>
+          <div class="cal-head-cell">Dv</div>
+          <div class="cal-head-cell" style="color:#a19f9d">Ds</div>
+          <div class="cal-head-cell" style="color:#a19f9d">Dg</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+    </div>
+    <div id="viewSetmana" style="display:none;flex:1;overflow:auto">
+      <div id="weekGrid" class="week-grid"></div>
+    </div>
+    <div id="viewLlista" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div class="list-toolbar">
+        <i class="ti ti-search" aria-hidden="true" style="font-size:14px;color:#605e5c"></i>
+        <input type="text" class="list-search" id="listSearch" placeholder="Cercar entrades...">
+        <select id="listSortSel" style="padding:4px 8px;border:1px solid #8a8886;border-radius:2px;font-size:12px;font-family:inherit;height:28px">
+          <option value="data_inici">Ordenar per data</option>
+          <option value="usuari">Ordenar per usuari</option>
+          <option value="tipus">Ordenar per tipus</option>
+        </select>
+        <span class="list-count" id="listCount"></span>
+      </div>
+      <div style="overflow:auto;flex:1">
+        <table class="list-table" id="listTable">
+          <thead>
+            <tr>
+              <th data-col="usuari">Usuari <span class="sort-icon ti ti-selector"></span></th>
+              <th data-col="tipus">Tipus <span class="sort-icon ti ti-selector"></span></th>
+              <th data-col="data_inici">Data inici <span class="sort-icon ti ti-selector"></span></th>
+              <th data-col="data_fi">Data fi <span class="sort-icon ti ti-selector"></span></th>
+              <th>Dies</th>
+              <th>Nota</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="listBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="leg-box" style="background:#deecf9;border-left:3px solid #0078d4"></div>Teletreball</div>
+      <div class="leg"><div class="leg-box" style="background:#dff6dd;border-left:3px solid #107c10"></div>Lliure disposició</div>
+      <div class="leg"><div class="leg-box" style="background:#fdcfb4;border-left:3px solid #d83b01"></div>Vacances</div>
+      <div class="leg"><div class="leg-box" style="background:#fef9e7;border-left:3px solid #c8a000"></div>Viatge de treball</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitleText">
+    <div class="modal-head">
+      <span id="modalTitleText">Nova entrada</span>
+      <button id="btnCloseModal" aria-label="Tancar"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="fUsuari">Nom de l'usuari</label>
+        <div class="ac-wrap">
+          <input type="text" id="fUsuari" placeholder="Escriu el nom..." autocomplete="off">
+          <div class="ac-drop" id="acDrop"></div>
+        </div>
+        <div class="hint"><i class="ti ti-info-circle" style="font-size:11px"></i> Escriu un nom nou o selecciona'n un d'existent</div>
+      </div>
+      <div class="form-group">
+        <label for="fTipus">Tipus</label>
+        <select id="fTipus">
+          <option value="Teletreball">🏠 Teletreball</option>
+          <option value="Lliure disposició">🌟 Lliure disposició</option>
+          <option value="Vacances">🏖️ Vacances</option>
+          <option value="Viatge de treball">✈️ Viatge de treball</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fInici">Data inici</label>
+          <input type="date" id="fInici">
+        </div>
+        <div class="form-group">
+          <label for="fFi">Data fi</label>
+          <input type="date" id="fFi">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="fNota">Nota (opcional)</label>
+        <textarea id="fNota" placeholder="Afegeix un comentari..."></textarea>
+      </div>
+      <div id="fError" style="color:#a4262c;font-size:12px;display:none;padding:6px 8px;background:#fde7e9;border-radius:2px;margin-top:4px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-default" id="btnCancelModal">Cancel·lar</button>
+      <button class="btn btn-primary" id="btnDesar"><i class="ti ti-device-floppy"></i> Desar entrada</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="ti ti-check" id="toastIcon"></i><span id="toastMsg"></span></div>
+
+<script>
+const SUPABASE_URL='https://ywdokasnggfgogbximgn.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3ZG9rYXNuZ2dmZ29nYnhpbWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0Mjk4NzUsImV4cCI6MjA5ODAwNTg3NX0.hRoJS_IwHYrNDNW9g6yXejMqFDL9YZXZ05Jln5c_Jbk';
+const TABLE='calendari_equip';
+const HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+
+const MESOS=['Gener','Febrer','Març','Abril','Maig','Juny','Juliol','Agost','Setembre','Octubre','Novembre','Desembre'];
+const DIES_CURT=['Dl','Dt','Dc','Dj','Dv','Ds','Dg'];
+const TIPUS_LABEL={'Teletreball':'Teletreball','Lliure disposició':'Lliure disposició','Vacances':'Vacances','Viatge de treball':'Viatge de treball'};
+const TIPUS_CLASS={'Teletreball':'pill-tt','Lliure disposició':'pill-ld','Vacances':'pill-vac','Viatge de treball':'pill-vt'};
+const EC_CLASS={'Teletreball':'ec-tt','Lliure disposició':'ec-ld','Vacances':'ec-vac','Viatge de treball':'ec-vt'};
+const BADGE_STYLE={
+  'Teletreball':'background:#deecf9;color:#004578',
+  'Lliure disposició':'background:#dff6dd;color:#107c10',
+  'Vacances':'background:#fdcfb4;color:#8a3100',
+  'Viatge de treball':'background:#fef9e7;color:#7d5c00'
+};
+
+let curAny=new Date().getFullYear();
+let curMes=new Date().getMonth();
+let curSetmanaOffset=0;
+let selData=null;
+let editId=null;
+let vistaActual='mes';
+let sortCol='data_inici',sortDir=1;
+let entrades=[];
+
+// ======== SUPABASE API ========
+async function sbGet(){
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=data_inici.asc`,{headers:HEADERS});
+  return await r.json();
+}
+async function sbInsert(data){
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`,{method:'POST',headers:{...HEADERS,'Prefer':'return=representation'},body:JSON.stringify(data)});
+  return await r.json();
+}
+async function sbUpdate(id,data){
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`,{method:'PATCH',headers:{...HEADERS,'Prefer':'return=representation'},body:JSON.stringify(data)});
+  return await r.json();
+}
+async function sbDelete(id){
+  await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${id}`,{method:'DELETE',headers:HEADERS});
+}
+
+async function carregarDades(){
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='<div class="loading" style="grid-column:1/-1"><i class="ti ti-loader-2"></i>Carregant...</div>';
+  entrades=await sbGet();
+  renderVista();
+}
+
+// ======== UTILS ========
+function ds(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
+function parseD(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+function inRange(a,b,x){return x>=a&&x<=b}
+function diffDies(a,b){return Math.round((parseD(b)-parseD(a))/86400000)+1}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmtDate(s){return s?parseD(s).toLocaleDateString('ca-ES',{day:'numeric',month:'short'}):'—'}
+function getUsuaris(){return [...new Set(entrades.map(e=>e.usuari))].sort()}
+
+function filterEntrades(list){
+  const fu=document.getElementById('filterUserText').value.trim().toLowerCase();
+  const ft=document.getElementById('filterTipus').value;
+  return list.filter(e=>{
+    if(fu&&!(e.usuari||'').toLowerCase().includes(fu))return false;
+    if(ft&&e.tipus!==ft)return false;
+    return true;
+  });
+}
+function getEntradesData(dstr){
+  return filterEntrades(entrades).filter(e=>inRange(e.data_inici,e.data_fi,dstr));
+}
+
+// ======== VISTA MES ========
+function renderMes(){
+  document.getElementById('navTitle').textContent=MESOS[curMes]+' '+curAny;
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+  const primerDia=new Date(curAny,curMes,1);
+  const diesMes=new Date(curAny,curMes+1,0).getDate();
+  const despl=(primerDia.getDay()+6)%7;
+  const diesPrev=new Date(curAny,curMes,0).getDate();
+  const avui=ds(new Date());
+
+  for(let i=0;i<42;i++){
+    let dia,esMes=false,data;
+    if(i<despl){dia=diesPrev-despl+i+1;data=new Date(curAny,curMes-1,dia);}
+    else if(i-despl<diesMes){dia=i-despl+1;esMes=true;data=new Date(curAny,curMes,dia);}
+    else{dia=i-despl-diesMes+1;data=new Date(curAny,curMes+1,dia);}
+    const dstr=ds(data);
+    const dow=i%7;
+    const cell=document.createElement('div');
+    cell.className='day'+(esMes?'':' other')+(dow>=5?' weekend':'')+(dstr===avui?' today':'')+(selData===dstr?' selected':'');
+    cell.addEventListener('click',()=>selectDay(dstr));
+    if(esMes) cell.addEventListener('dblclick',()=>{selectDay(dstr);openModal(dstr);});
+    const numDiv=document.createElement('div');
+    numDiv.className='day-num';
+    numDiv.textContent=dia;
+    cell.appendChild(numDiv);
+    if(esMes){
+      const evs=getEntradesData(dstr);
+      evs.slice(0,3).forEach(e=>{
+        const p=document.createElement('div');
+        p.className='pill '+(TIPUS_CLASS[e.tipus]||'pill-tt');
+        p.textContent=e.usuari+' · '+(TIPUS_LABEL[e.tipus]||e.tipus);
+        p.title=e.usuari+' — '+(e.tipus||'')+(e.nota?' ('+e.nota+')':'');
+        p.addEventListener('click',ev=>{ev.stopPropagation();selectDay(dstr);});
+        p.addEventListener('dblclick',ev=>{ev.stopPropagation();selectDay(dstr);openModal(dstr);});
+        cell.appendChild(p);
+      });
+      if(evs.length>3){const m=document.createElement('div');m.className='more-pill';m.textContent='+'+(evs.length-3)+' més';cell.appendChild(m);}
+    }
+    grid.appendChild(cell);
+  }
+}
+
+// ======== VISTA SETMANA ========
+function getLlunesSetmana(){
+  const avui=new Date();
+  const dow=(avui.getDay()+6)%7;
+  const ll=new Date(avui);
+  ll.setDate(avui.getDate()-dow+curSetmanaOffset*7);
+  ll.setHours(0,0,0,0);
+  return ll;
+}
+function renderSetmana(){
+  const ll=getLlunesSetmana();
+  const dies=[];
+  for(let i=0;i<7;i++){const d=new Date(ll);d.setDate(ll.getDate()+i);dies.push(d);}
+  const avuiStr=ds(new Date());
+  document.getElementById('navTitle').textContent=dies[0].getDate()+' '+MESOS[dies[0].getMonth()]+' — '+dies[6].getDate()+' '+MESOS[dies[6].getMonth()]+' '+dies[6].getFullYear();
+  const grid=document.getElementById('weekGrid');
+  grid.innerHTML='';
+  const empty=document.createElement('div');empty.className='wk-head';grid.appendChild(empty);
+  dies.forEach((d,i)=>{
+    const dstr=ds(d);
+    const isToday=dstr===avuiStr;
+    const cap=document.createElement('div');
+    cap.className='wk-head'+(isToday?' today-col':'');
+    const lbl=document.createElement('div');lbl.textContent=DIES_CURT[i];
+    const num=document.createElement('div');num.className='wk-day-num'+(isToday?' today-num':'');num.textContent=d.getDate();
+    cap.appendChild(lbl);cap.appendChild(num);grid.appendChild(cap);
+  });
+  for(let h=8;h<=20;h++){
+    const tc=document.createElement('div');tc.className='wk-time-col';tc.textContent=h+':00';grid.appendChild(tc);
+    dies.forEach((d,i)=>{
+      const dstr=ds(d);
+      const cell=document.createElement('div');
+      cell.className='wk-cell'+(i>=5?' weekend-cell':'');
+      cell.addEventListener('click',()=>selectDay(dstr));
+      cell.addEventListener('dblclick',()=>{selectDay(dstr);openModal(dstr);});
+      if(h===8){
+        const evs=getEntradesData(dstr);
+        evs.forEach(e=>{
+          const p=document.createElement('div');
+          p.className='wk-pill '+(TIPUS_CLASS[e.tipus]||'pill-tt');
+          p.textContent=e.usuari+' — '+(e.tipus||'');
+          p.title=(e.nota||'');
+          p.addEventListener('click',ev=>{ev.stopPropagation();selectDay(dstr);});
+          cell.appendChild(p);
+        });
+        if(evs.length>0)cell.style.minHeight=(evs.length*24+12)+'px';
+      }
+      grid.appendChild(cell);
+    });
+  }
+}
+
+// ======== VISTA LLISTA ========
+function renderLlista(){
+  document.getElementById('navTitle').textContent='Totes les entrades';
+  const search=(document.getElementById('listSearch').value||'').toLowerCase();
+  let list=filterEntrades([...entrades]);
+  if(search)list=list.filter(e=>(e.usuari||'').toLowerCase().includes(search)||(e.tipus||'').toLowerCase().includes(search)||(e.nota||'').toLowerCase().includes(search));
+  list.sort((a,b)=>{let va=a[sortCol]||'',vb=b[sortCol]||'';return va<vb?-sortDir:va>vb?sortDir:0;});
+  document.getElementById('listCount').textContent=list.length+' entrada'+(list.length!==1?'s':'');
+  document.querySelectorAll('#listTable th[data-col]').forEach(th=>{
+    const ic=th.querySelector('.sort-icon');
+    ic.className='sort-icon ti '+(th.dataset.col===sortCol?(sortDir===1?'ti-sort-ascending':'ti-sort-descending'):'ti-selector');
+  });
+  const tbody=document.getElementById('listBody');
+  tbody.innerHTML='';
+  if(list.length===0){tbody.innerHTML='<tr><td colspan="7"><div class="list-empty"><i class="ti ti-calendar-off"></i>Cap entrada trobada</div></td></tr>';return;}
+  list.forEach(e=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><span style="font-weight:600">${esc(e.usuari)}</span></td>
+      <td><span class="list-badge" style="${BADGE_STYLE[e.tipus]||''}">${esc(e.tipus)}</span></td>
+      <td>${fmtDate(e.data_inici)}</td>
+      <td>${fmtDate(e.data_fi)}</td>
+      <td style="text-align:center;color:#605e5c">${e.data_inici&&e.data_fi?diffDies(e.data_inici,e.data_fi):'—'}</td>
+      <td style="color:#605e5c;font-style:italic">${esc(e.nota||'—')}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-sm" style="border:1px solid #8a8886;background:#fff" onclick="editEntrada(${e.id})"><i class="ti ti-edit" style="font-size:11px"></i> Editar</button>
+        <button class="btn-sm" style="border:1px solid #fde7e9;background:#fde7e9;color:#a4262c;margin-left:4px" onclick="eliminarEntrada(${e.id})"><i class="ti ti-trash" style="font-size:11px"></i></button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ======== NAVEGACIÓ ========
+function setVista(vista){
+  vistaActual=vista;
+  document.querySelectorAll('.view-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===vista));
+  document.getElementById('viewMes').style.display=vista==='mes'?'flex':'none';
+  document.getElementById('viewSetmana').style.display=vista==='setmana'?'block':'none';
+  document.getElementById('viewLlista').style.display=vista==='llista'?'flex':'none';
+  renderVista();
+}
+function renderVista(){
+  if(vistaActual==='mes')renderMes();
+  else if(vistaActual==='setmana')renderSetmana();
+  else renderLlista();
+}
+document.querySelectorAll('.view-tab').forEach(t=>t.addEventListener('click',()=>setVista(t.dataset.view)));
+document.getElementById('btnPrev').onclick=()=>{if(vistaActual==='mes'){curMes--;if(curMes<0){curMes=11;curAny--;}}else if(vistaActual==='setmana')curSetmanaOffset--;renderVista();};
+document.getElementById('btnNext').onclick=()=>{if(vistaActual==='mes'){curMes++;if(curMes>11){curMes=0;curAny++;}}else if(vistaActual==='setmana')curSetmanaOffset++;renderVista();};
+document.getElementById('btnAvui').onclick=()=>{curAny=new Date().getFullYear();curMes=new Date().getMonth();curSetmanaOffset=0;renderVista();};
+document.getElementById('filterUserText').addEventListener('input',renderVista);
+document.getElementById('filterTipus').addEventListener('change',renderVista);
+
+// ======== SIDEBAR ========
+function selectDay(dstr){
+  selData=dstr;
+  if(vistaActual==='mes')renderMes();
+  renderSidebar(dstr);
+}
+function renderSidebar(dstr){
+  const d=parseD(dstr);
+  document.getElementById('sidebarDateLabel').textContent=d.toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('btnAddSidebar').onclick=()=>openModal(dstr);
+  const evs=getEntradesData(dstr);
+  const cont=document.getElementById('sidebarContent');
+  if(evs.length===0){cont.innerHTML='<div class="empty-day"><i class="ti ti-calendar-off"></i>Cap entrada per aquest dia</div>';return;}
+  cont.innerHTML='';
+  evs.forEach(e=>{
+    const card=document.createElement('div');
+    card.className='entry-card '+(EC_CLASS[e.tipus]||'ec-tt');
+    card.innerHTML=`
+      <div class="ec-user"><i class="ti ti-user" style="font-size:11px"></i> ${esc(e.usuari)}</div>
+      <div style="font-size:12px;font-weight:600;margin-top:2px">${esc(e.tipus)}</div>
+      <div class="ec-dates"><i class="ti ti-calendar" style="font-size:11px"></i> ${fmtDate(e.data_inici)} → ${fmtDate(e.data_fi)}</div>
+      ${e.nota?`<div class="ec-note">${esc(e.nota)}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:7px">
+        <button class="btn-sm" style="border:1px solid #8a8886;background:#fff" onclick="editEntrada(${e.id})"><i class="ti ti-edit" style="font-size:11px"></i> Editar</button>
+        <button class="btn-sm" style="border:1px solid #fde7e9;background:#fde7e9;color:#a4262c" onclick="eliminarEntrada(${e.id})"><i class="ti ti-trash" style="font-size:11px"></i> Eliminar</button>
+      </div>`;
+    cont.appendChild(card);
+  });
+}
+
+// ======== AUTOCOMPLETE ========
+const fUsuariInput=document.getElementById('fUsuari');
+const acDrop=document.getElementById('acDrop');
+fUsuariInput.addEventListener('input',()=>{
+  const val=fUsuariInput.value.trim().toLowerCase();
+  acDrop.innerHTML='';
+  if(!val){acDrop.classList.remove('show');return;}
+  const usuaris=getUsuaris();
+  const coin=usuaris.filter(u=>u.toLowerCase().includes(val));
+  const exacta=usuaris.some(u=>u.toLowerCase()===val);
+  coin.forEach(u=>{const item=document.createElement('div');item.className='ac-item';item.textContent=u;item.addEventListener('mousedown',()=>{fUsuariInput.value=u;acDrop.classList.remove('show');});acDrop.appendChild(item);});
+  if(!exacta&&val.length>1){const item=document.createElement('div');item.className='ac-item new-user';item.innerHTML=`<i class="ti ti-user-plus" style="font-size:12px;margin-right:4px"></i> Afegir "${fUsuariInput.value.trim()}" com a nou usuari`;item.addEventListener('mousedown',()=>acDrop.classList.remove('show'));acDrop.appendChild(item);}
+  acDrop.classList.toggle('show',acDrop.children.length>0);
+});
+fUsuariInput.addEventListener('blur',()=>setTimeout(()=>acDrop.classList.remove('show'),150));
+fUsuariInput.addEventListener('focus',()=>{if(fUsuariInput.value)fUsuariInput.dispatchEvent(new Event('input'));});
+
+// ======== MODAL ========
+function openModal(dstr,id){
+  editId=id||null;
+  document.getElementById('fError').style.display='none';
+  acDrop.classList.remove('show');
+  if(id){
+    const e=entrades.find(x=>x.id===id);
+    document.getElementById('modalTitleText').textContent='Editar entrada';
+    fUsuariInput.value=e.usuari;
+    document.getElementById('fTipus').value=e.tipus;
+    document.getElementById('fInici').value=e.data_inici;
+    document.getElementById('fFi').value=e.data_fi;
+    document.getElementById('fNota').value=e.nota||'';
+  } else {
+    document.getElementById('modalTitleText').textContent='Nova entrada';
+    fUsuariInput.value='';
+    document.getElementById('fTipus').value='Teletreball';
+    document.getElementById('fInici').value=dstr||ds(new Date());
+    document.getElementById('fFi').value=dstr||ds(new Date());
+    document.getElementById('fNota').value='';
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>fUsuariInput.focus(),80);
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function editEntrada(id){openModal(null,id);}
+
+async function eliminarEntrada(id){
+  if(!confirm('Eliminar aquesta entrada?'))return;
+  await sbDelete(id);
+  entrades=entrades.filter(e=>e.id!==id);
+  renderVista();
+  if(selData)renderSidebar(selData);
+  showToast('Entrada eliminada');
+}
+
+document.getElementById('btnDesar').onclick=async function(){
+  const usuari=fUsuariInput.value.trim();
+  const tipus=document.getElementById('fTipus').value;
+  const data_inici=document.getElementById('fInici').value;
+  const data_fi=document.getElementById('fFi').value;
+  const nota=document.getElementById('fNota').value.trim();
+  const err=document.getElementById('fError');
+  if(!usuari){err.textContent="Cal indicar el nom de l'usuari.";err.style.display='block';return;}
+  if(!data_inici||!data_fi){err.textContent="Cal seleccionar les dates d'inici i fi.";err.style.display='block';return;}
+  if(data_fi<data_inici){err.textContent="La data fi no pot ser anterior a la data d'inici.";err.style.display='block';return;}
+  err.style.display='none';
+  document.getElementById('btnDesar').disabled=true;
+  document.getElementById('btnDesar').textContent='Desant...';
+  try{
+    if(editId){
+      const res=await sbUpdate(editId,{usuari,tipus,data_inici,data_fi,nota});
+      const idx=entrades.findIndex(e=>e.id===editId);
+      entrades[idx]=res[0]||{id:editId,usuari,tipus,data_inici,data_fi,nota};
+      showToast('Entrada actualitzada');
+    } else {
+      const res=await sbInsert({usuari,tipus,data_inici,data_fi,nota});
+      entrades.push(res[0]||{id:Date.now(),usuari,tipus,data_inici,data_fi,nota});
+      showToast('Entrada desada');
+    }
+    closeModal();
+    renderVista();
+    if(selData)renderSidebar(selData);
+    document.getElementById('headerAvatar').textContent=usuari.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('headerUser').textContent=usuari;
+  } catch(e){
+    err.textContent='Error en desar. Comprova la connexió.';err.style.display='block';
+  }
+  document.getElementById('btnDesar').disabled=false;
+  document.getElementById('btnDesar').innerHTML='<i class="ti ti-device-floppy"></i> Desar entrada';
+};
+
+document.getElementById('btnNova').onclick=()=>openModal(selData||ds(new Date()));
+document.getElementById('btnCloseModal').onclick=closeModal;
+document.getElementById('btnCancelModal').onclick=closeModal;
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
+document.querySelectorAll('#listTable th[data-col]').forEach(th=>{th.addEventListener('click',()=>{if(sortCol===th.dataset.col)sortDir*=-1;else{sortCol=th.dataset.col;sortDir=1;}renderLlista();});});
+document.getElementById('listSearch').addEventListener('input',renderLlista);
+document.getElementById('listSortSel').addEventListener('change',function(){sortCol=this.value;sortDir=1;renderLlista();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+function showToast(msg,error){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  document.getElementById('toastIcon').className=error?'ti ti-alert-circle':'ti ti-check';
+  t.style.background=error?'#a4262c':'#107c10';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+setVista('mes');
+selectDay(ds(new Date()));
+carregarDades();
+</script>
+</body>
+</html>
